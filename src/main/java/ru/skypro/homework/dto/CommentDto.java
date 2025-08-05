@@ -13,7 +13,7 @@ public class CommentDto {
             example = "123",
             accessMode = Schema.AccessMode.READ_ONLY
     )
-    private Long author;
+    private Integer author;
 
     @Schema(
             description = "Ссылка на аватар автора комментария",
@@ -41,7 +41,7 @@ public class CommentDto {
             example = "456",
             accessMode = Schema.AccessMode.READ_ONLY
     )
-    private Long pk;
+    private Integer pk;
 
     @Schema(
             description = "Текст комментария",

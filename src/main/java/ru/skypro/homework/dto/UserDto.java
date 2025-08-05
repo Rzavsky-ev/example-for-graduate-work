@@ -13,7 +13,7 @@ public class UserDto {
             example = "1",
             accessMode = Schema.AccessMode.READ_ONLY
     )
-    private Long id;
+    private Integer id;
 
     @Schema(
             description = "Email пользователя (логин)",
@@ -51,7 +51,7 @@ public class UserDto {
             allowableValues = {"USER", "ADMIN"},
             accessMode = Schema.AccessMode.READ_ONLY
     )
-    private String role;
+    private Role role;
 
     @Schema(
             description = "Ссылка на аватар пользователя",

@@ -10,7 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import ru.skypro.homework.dto.LoginDto;
-import ru.skypro.homework.dto.RegisterDto;
+import ru.skypro.homework.dto.RegisterUserDto;
 import ru.skypro.homework.service.AuthService;
 
 @Slf4j
@@ -67,7 +67,7 @@ public class AuthController {
     )
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    public void register(@RequestBody RegisterDto register) {
+    public void register(@RequestBody RegisterUserDto register) {
         if (!authService.register(register)) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,

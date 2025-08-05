@@ -13,7 +13,7 @@ public class AdDto {
             example = "1",
             accessMode = Schema.AccessMode.READ_ONLY
     )
-    private Long author;
+    private Integer authorId;
 
     @Schema(
             description = "Ссылка на изображение объявления",
@@ -27,14 +27,14 @@ public class AdDto {
             example = "123",
             accessMode = Schema.AccessMode.READ_ONLY
     )
-    private Long pk;
+    private Integer pk;
 
     @Schema(
             description = "Цена товара в объявлении",
             example = "5000",
             minimum = "0"
     )
-    private Long price;
+    private Integer price;
 
     @Schema(
             description = "Заголовок объявления",

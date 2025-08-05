@@ -7,7 +7,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Schema(description = "DTO для регистрации нового пользователя")
-public class RegisterDto {
+public class RegisterUserDto {
     @Schema(
             description = "Логин пользователя (email)",
             example = "user@example.com",
