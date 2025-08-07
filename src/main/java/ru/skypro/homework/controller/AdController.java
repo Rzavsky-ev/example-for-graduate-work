@@ -72,7 +72,7 @@ public class AdController {
     @PatchMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     public AdDto updateAd(
-            @PathVariable Long id,
+            @PathVariable Integer id,
             @RequestBody CreateOrUpdateAdDto updatedAd
     ) {
         return adService.updateAd(id, updatedAd);
@@ -85,7 +85,7 @@ public class AdController {
             })
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteAd(@PathVariable Long id) throws IOException {
+    public void deleteAd(@PathVariable Integer id) throws IOException {
         adService.deleteAd(id);
     }
 

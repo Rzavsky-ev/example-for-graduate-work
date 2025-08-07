@@ -128,8 +128,8 @@ public class AdService {
      * @throws NoSuchElementException если объявление не найдено
      */
     @Transactional
-    public AdDto updateAd(Long id, CreateOrUpdateAdDto updatedAd) {
-        Ad ad = adRepository.findById(id.intValue())
+    public AdDto updateAd(Integer id, CreateOrUpdateAdDto updatedAd) {
+        Ad ad = adRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Ad not found"));
 
         if (updatedAd.getTitle() != null) {
@@ -154,8 +154,8 @@ public class AdService {
      * @throws NoSuchElementException если объявление не найдено
      */
     @Transactional
-    public void deleteAd(Long id) throws IOException {
-        Ad ad = adRepository.findById(id.intValue())
+    public void deleteAd(Integer id) throws IOException {
+        Ad ad = adRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Ad not found"));
 
         imageService.deleteImage(ad.getImagePath());
