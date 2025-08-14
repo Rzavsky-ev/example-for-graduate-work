@@ -171,7 +171,7 @@ class UserServiceTest {
         when(imageService.saveUserImage(multipartFile)).thenReturn("users/newImage.jpg");
         when(userRepository.save(testUser)).thenReturn(testUser);
 
-        userService.updateUserImage(multipartFile, authentication);
+        userService.downloadUserImage(multipartFile, authentication);
 
         verify(imageService).deleteImage(imagePath);
         verify(imageService).saveUserImage(multipartFile);
@@ -189,7 +189,7 @@ class UserServiceTest {
         when(imageService.saveUserImage(multipartFile)).thenReturn("users/newImage.jpg");
         when(userRepository.save(testUser)).thenReturn(testUser);
 
-        userService.updateUserImage(multipartFile, authentication);
+        userService.downloadUserImage(multipartFile, authentication);
 
         verify(imageService, never()).deleteImage(any());
         verify(imageService).saveUserImage(multipartFile);

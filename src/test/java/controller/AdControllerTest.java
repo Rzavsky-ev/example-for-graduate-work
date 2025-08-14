@@ -24,7 +24,6 @@ import ru.skypro.homework.dto.CreateOrUpdateAdDto;
 import ru.skypro.homework.dto.ExtendedAdDto;
 import ru.skypro.homework.service.AdService;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 
@@ -104,11 +103,10 @@ public class AdControllerTest {
         verify(adService, times(1)).getExtendedAdDto(LONG_AD_ID);
     }
 
-    @DisplayName("Создание объявления - должен создать новое объявление и вернуть статус 201")
+    @DisplayName("Создание объявления - должен создать новое объявление без изображения и вернуть статус 201")
     @Test
     @WithMockUser
-    void createAdShouldCreateNewAdAndReturnCreatedStatus() throws Exception {
-
+    void createAdWithoutImageShouldCreateNewAdAndReturnCreatedStatus() throws Exception {
         CreateOrUpdateAdDto createAdDto = new CreateOrUpdateAdDto();
         createAdDto.setTitle("New Ad");
         createAdDto.setDescription("Description");
@@ -118,33 +116,18 @@ public class AdControllerTest {
         createdAdDto.setPk(AD_ID);
         createdAdDto.setTitle("New Ad");
 
-        MockMultipartFile imageFile = new MockMultipartFile(
-                "image",
-                "image.jpg",
-                MediaType.IMAGE_JPEG_VALUE,
-                IMAGE_BYTES
-        );
-
-        MockMultipartFile jsonFile = new MockMultipartFile(
-                "properties",
-                "",
-                MediaType.APPLICATION_JSON_VALUE,
-                objectMapper.writeValueAsString(createAdDto).getBytes(StandardCharsets.UTF_8)
-        );
-
-        when(adService.createAd(any(CreateOrUpdateAdDto.class), any(MultipartFile.class), any(Authentication.class)))
+        when(adService.createAdWithoutImage(any(CreateOrUpdateAdDto.class), any(Authentication.class)))
                 .thenReturn(createdAdDto);
 
-        mockMvc.perform(MockMvcRequestBuilders.multipart("/ads")
-                        .file(imageFile)
-                        .file(jsonFile)
-                        .contentType(MediaType.MULTIPART_FORM_DATA))
+        mockMvc.perform(post("/ads/no-image")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createAdDto)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.pk").value(AD_ID))
                 .andExpect(jsonPath("$.title").value("New Ad"));
 
         verify(adService, times(1))
-                .createAd(any(CreateOrUpdateAdDto.class), any(MultipartFile.class), any(Authentication.class));
+                .createAdWithoutImage(any(CreateOrUpdateAdDto.class), any(Authentication.class));
     }
 
     @DisplayName("Обновление объявления - должен обновить объявление и вернуть статус 200")

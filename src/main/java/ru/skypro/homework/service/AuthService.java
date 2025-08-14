@@ -1,12 +1,12 @@
 package ru.skypro.homework.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.stereotype.Service;
 import ru.skypro.homework.dto.RegisterUserDto;
+import ru.skypro.homework.model.User;
+import ru.skypro.homework.repository.UserRepository;
+import ru.skypro.homework.utils.JwtUtils;
 
 /**
  * Сервис для аутентификации и регистрации пользователей.
@@ -15,8 +15,11 @@ import ru.skypro.homework.dto.RegisterUserDto;
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final UserDetailsManager userDetailsManager;
+    private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtUtils jwtUtils;
+
+
 
     /**
      * Аутентификация пользователя.
@@ -25,12 +28,13 @@ public class AuthService {
      * @param password пароль
      * @return true если аутентификация успешна
      */
-    public boolean login(String username, String password) {
-        if (!userDetailsManager.userExists(username)) {
-            return false;
+    public String login(String username, String password) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        if (passwordEncoder.matches(password, user.getPassword())) {
+            return jwtUtils.generateToken(username);
         }
-        UserDetails userDetails = userDetailsManager.loadUserByUsername(username);
-        return passwordEncoder.matches(password, userDetails.getPassword());
+        throw new RuntimeException("Invalid password");
     }
 
     /**
@@ -40,17 +44,19 @@ public class AuthService {
      * @return true если регистрация успешна
      */
     public boolean register(RegisterUserDto register) {
-        if (userDetailsManager.userExists(register.getUsername())) {
+        if (userRepository.existsByUsername(register.getUsername())) {
             return false;
         }
 
-        UserDetails newUser = User.builder()
-                .username(register.getUsername())
-                .password(passwordEncoder.encode(register.getPassword()))
-                .roles(register.getRole().name())
-                .build();
+        User newUser = new User();
+        newUser.setUsername(register.getUsername());
+        newUser.setPassword(passwordEncoder.encode(register.getPassword()));
+        newUser.setFirstName(register.getFirstName());
+        newUser.setLastName(register.getLastName());
+        newUser.setPhone(register.getPhone());
+        newUser.setRole(register.getRole());
 
-        userDetailsManager.createUser(newUser);
+        userRepository.save(newUser);
         return true;
     }
 }

@@ -124,7 +124,7 @@ public class UserService {
      * @throws IOException если произошла ошибка при работе с изображением
      */
     @Transactional
-    public void updateUserImage(MultipartFile image, Authentication authentication) throws IOException {
+    public byte[] downloadUserImage(MultipartFile image, Authentication authentication) throws IOException {
         User user = getUserFromAuthentication(authentication);
 
         if (user.getImagePath() != null) {
@@ -134,6 +134,7 @@ public class UserService {
         String imagePath = imageService.saveUserImage(image);
         user.setImagePath(imagePath);
         userRepository.save(user);
+        return image.getBytes();
     }
 
     /**

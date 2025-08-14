@@ -1,5 +1,10 @@
 package ru.skypro.homework.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -9,11 +14,6 @@ import org.springframework.web.multipart.MultipartFile;
 import ru.skypro.homework.dto.AdDto;
 import ru.skypro.homework.dto.CreateOrUpdateAdDto;
 import ru.skypro.homework.dto.ExtendedAdDto;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import ru.skypro.homework.service.AdService;
 
 import java.io.IOException;
@@ -26,6 +26,7 @@ import java.util.List;
 public class AdController {
 
     private final AdService adService;
+
 
     @Operation(summary = "Получить все объявления",
             responses = @ApiResponse(responseCode = "200",
@@ -49,19 +50,29 @@ public class AdController {
         return adService.getExtendedAdDto(id);
     }
 
-    @Operation(summary = "Создать новое объявление",
+    @Operation(summary = "Создать объявление",
             responses = @ApiResponse(responseCode = "201",
                     description = "Created",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schema = @Schema(implementation = AdDto.class))))
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping("/no-image")
     @ResponseStatus(HttpStatus.CREATED)
-    public AdDto createAd(
-            @RequestPart CreateOrUpdateAdDto properties,
-            @RequestPart MultipartFile image,
-            Authentication authentication
-    ) throws IOException {
-        return adService.createAd(properties, image, authentication);
+    public AdDto createAdWithoutImage(
+            @RequestBody CreateOrUpdateAdDto properties,
+            Authentication authentication) {
+        return adService.createAdWithoutImage(properties, authentication);
+    }
+
+    @Operation(summary = "Загрузить изображение для объявления",
+            responses = @ApiResponse(responseCode = "200",
+                    description = "OK",
+                    content = @Content(mediaType = MediaType.IMAGE_PNG_VALUE)))
+    @PostMapping(value = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @ResponseStatus(HttpStatus.OK)
+    public byte[] uploadAdImage(
+            @PathVariable Integer id,
+            @RequestParam MultipartFile image) throws IOException {
+        return adService.uploadAdImage(id, image);
     }
 
     @Operation(summary = "Обновить объявление",
@@ -78,6 +89,7 @@ public class AdController {
         return adService.updateAd(id, updatedAd);
     }
 
+
     @Operation(summary = "Удалить объявление",
             responses = {
                     @ApiResponse(responseCode = "204", description = "No Content"),
@@ -88,6 +100,7 @@ public class AdController {
     public void deleteAd(@PathVariable Integer id) throws IOException {
         adService.deleteAd(id);
     }
+
 
     @Operation(summary = "Обновить изображение объявления",
             responses = @ApiResponse(responseCode = "200",
@@ -101,6 +114,7 @@ public class AdController {
     ) throws IOException {
         return adService.updateAdImage(id, image);
     }
+
 
     @Operation(summary = "Получить объявления текущего пользователя",
             responses = @ApiResponse(responseCode = "200",

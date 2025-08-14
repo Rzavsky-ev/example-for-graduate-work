@@ -13,6 +13,9 @@ import ru.skypro.homework.dto.LoginDto;
 import ru.skypro.homework.dto.RegisterUserDto;
 import ru.skypro.homework.service.AuthService;
 
+import java.util.Collections;
+import java.util.Map;
+
 @Slf4j
 @CrossOrigin(value = "http://localhost:3000")
 @RestController
@@ -40,13 +43,9 @@ public class AuthController {
     )
     @PostMapping("/login")
     @ResponseStatus(HttpStatus.OK)
-    public void login(@RequestBody LoginDto login) {
-        if (!authService.login(login.getUsername(), login.getPassword())) {
-            throw new ResponseStatusException(
-                    HttpStatus.UNAUTHORIZED,
-                    "Неверные учетные данные"
-            );
-        }
+    public Map<String, String> login(@RequestBody LoginDto login) {
+        String token = authService.login(login.getUsername(), login.getPassword());
+        return Collections.singletonMap("token", token);
     }
 
     @Operation(

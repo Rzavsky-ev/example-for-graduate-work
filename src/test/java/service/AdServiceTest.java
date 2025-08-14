@@ -6,7 +6,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.multipart.MultipartFile;
 import ru.skypro.homework.converter.AdMapper;
@@ -26,232 +25,212 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class AdServiceTest {
 
+    @Mock
+    private AdRepository adRepository;
+    @Mock
+    private UserRepository userRepository;
+    @Mock
+    private AdMapper adMapper;
+    @Mock
+    private ImageService imageService;
+    @Mock
+    private Authentication authentication;
+    @Mock
+    private MultipartFile imageFile;
+
     @InjectMocks
     private AdService adService;
 
-    @Mock
-    private AdRepository adRepository;
+    private final User testUser = new User();
+    private final Ad testAd = new Ad();
+    private final AdDto testAdDto = new AdDto();
+    private final ExtendedAdDto testExtendedAdDto = new ExtendedAdDto();
+    private final CreateOrUpdateAdDto testCreateOrUpdateAdDto = new CreateOrUpdateAdDto();
 
-    @Mock
-    private UserRepository userRepository;
-
-    @Mock
-    private AdMapper adMapper;
-
-    @Mock
-    private ImageService imageService;
-
-    @Mock
-    private Authentication authentication;
-
-    @DisplayName("Получение всех объявлений - должен вернуть список DTO объявлений")
+    @DisplayName("Получение всех объявлений - должен вернуть список AdDto, когда объявления существуют")
     @Test
-    void getAllAdsReturnListOfAdDto() {
+    void getAllAdsShouldReturnListOfAdDtoWhenAdsExist() {
 
-        Ad ad1 = new Ad();
-        Ad ad2 = new Ad();
-        AdDto adDto1 = new AdDto();
-        AdDto adDto2 = new AdDto();
-
-        when(adRepository.findAll()).thenReturn(List.of(ad1, ad2));
-        when(adMapper.toAdDto(ad1)).thenReturn(adDto1);
-        when(adMapper.toAdDto(ad2)).thenReturn(adDto2);
+        when(adRepository.findAll()).thenReturn(List.of(testAd));
+        when(adMapper.toAdDto(testAd)).thenReturn(testAdDto);
 
         List<AdDto> result = adService.getAllAds();
 
-        assertEquals(2, result.size());
-        assertTrue(result.contains(adDto1));
-        assertTrue(result.contains(adDto2));
-        verify(adRepository, times(1)).findAll();
+        assertEquals(1, result.size());
+        assertEquals(testAdDto, result.get(0));
+        verify(adRepository).findAll();
+        verify(adMapper).toAdDto(testAd);
     }
 
-    @DisplayName("Получение расширенной информации об объявлении - должен вернуть ExtendedAdDto при существующем объявлении")
+    @DisplayName("Получение расширенного AdDto - должен вернуть ExtendedAdDto, когда объявление существует")
     @Test
-    void getExtendedAdDtoWhenAdExistsReturnExtendedAdDto() {
+    void getExtendedAdDtoShouldReturnExtendedAdDtoWhenAdExists() {
 
-        int adId = 1;
-        Ad ad = new Ad();
-        ExtendedAdDto expectedDto = new ExtendedAdDto();
+        Long adId = 1L;
+        when(adRepository.findById(adId.intValue())).thenReturn(Optional.of(testAd));
+        when(adMapper.toExtendedAdDto(testAd)).thenReturn(testExtendedAdDto);
 
-        when(adRepository.findById(adId)).thenReturn(Optional.of(ad));
-        when(adMapper.toExtendedAdDto(ad)).thenReturn(expectedDto);
+        ExtendedAdDto result = adService.getExtendedAdDto(adId);
 
-        ExtendedAdDto result = adService.getExtendedAdDto((long) adId);
-
-        assertEquals(expectedDto, result);
-        verify(adRepository, times(1)).findById(adId);
+        assertEquals(testExtendedAdDto, result);
+        verify(adRepository).findById(adId.intValue());
+        verify(adMapper).toExtendedAdDto(testAd);
     }
 
-    @DisplayName("Получение расширенной информации об объявлении - должен выбросить исключение при отсутствии объявления")
+    @DisplayName("Получение расширенного AdDto - должен выбросить исключение, когда объявление не найдено")
     @Test
-    void getExtendedAdDtoWhenAdNotExistsThrowException() {
+    void getExtendedAdDtoShouldThrowNoSuchElementExceptionWhenAdNotFound() {
 
-        int adId = 1;
-        when(adRepository.findById(adId)).thenReturn(Optional.empty());
+        Long adId = 1L;
+        when(adRepository.findById(adId.intValue())).thenReturn(Optional.empty());
 
-        assertThrows(NoSuchElementException.class, () -> adService.getExtendedAdDto((long) adId));
+        assertThrows(NoSuchElementException.class, () -> adService.getExtendedAdDto(adId));
+        verify(adRepository).findById(adId.intValue());
     }
 
-    @DisplayName("Создание объявления - должен сохранить объявление и вернуть DTO")
+    @DisplayName("Создание объявления без изображения - должен вернуть AdDto при валидных данных")
     @Test
-    void createAdSaveAdAndReturnAdDto() throws IOException {
+    void createAdWithoutImageShouldReturnAdDtoWhenValidInput() {
 
-        CreateOrUpdateAdDto properties = new CreateOrUpdateAdDto();
-        properties.setTitle("Test Ad");
-        properties.setDescription("Test Description");
-        properties.setPrice(1000);
+        when(authentication.getName()).thenReturn("username");
+        when(userRepository.findByUsername("username")).thenReturn(Optional.of(testUser));
+        when(adRepository.save(any(Ad.class))).thenReturn(testAd);
+        when(adMapper.toAdDto(testAd)).thenReturn(testAdDto);
 
-        MultipartFile image = new MockMultipartFile("image", "test.jpg", "image/jpeg", "test image".getBytes());
-        String imagePath = "/ads/images/1";
-        User author = new User();
-        author.setUsername("test@example.com");
+        AdDto result = adService.createAdWithoutImage(testCreateOrUpdateAdDto, authentication);
 
-        Ad newAd = new Ad();
-        newAd.setTitle(properties.getTitle());
-        newAd.setDescription(properties.getDescription());
-        newAd.setPrice(properties.getPrice());
-        newAd.setAuthor(author);
-        newAd.setImagePath(imagePath);
-
-        Ad savedAd = new Ad();
-        savedAd.setId(1);
-        AdDto expectedAdDto = new AdDto();
-
-        when(authentication.getName()).thenReturn("test@example.com");
-        when(userRepository.findByUsername("test@example.com")).thenReturn(Optional.of(author));
-        when(imageService.saveAdImage(image)).thenReturn(imagePath);
-        when(adRepository.save(any(Ad.class))).thenReturn(savedAd);
-        when(adMapper.toAdDto(savedAd)).thenReturn(expectedAdDto);
-
-        AdDto result = adService.createAd(properties, image, authentication);
-
-        assertEquals(expectedAdDto, result);
-        verify(userRepository, times(1)).findByUsername("test@example.com");
-        verify(imageService, times(1)).saveAdImage(image);
-        verify(adRepository, times(1)).save(any(Ad.class));
+        assertEquals(testAdDto, result);
+        verify(userRepository).findByUsername("username");
+        verify(adRepository).save(any(Ad.class));
+        verify(adMapper).toAdDto(testAd);
     }
 
-    @DisplayName("Обновление объявления - должен обновить и вернуть DTO при существующем объявлении")
+    @DisplayName("Загрузка изображения объявления - должен сохранить изображение и вернуть байты при валидных данных")
     @Test
-    void updateAdWhenAdExistsUpdateAndReturnAdDto() {
+    void uploadAdImageShouldSaveImageAndReturnBytesWhenValidInput() throws IOException {
 
-        int adId = 1;
-        CreateOrUpdateAdDto updatedAd = new CreateOrUpdateAdDto();
-        updatedAd.setTitle("Updated Title");
-        updatedAd.setDescription("Updated Description");
-        updatedAd.setPrice(2000);
+        Integer adId = 1;
+        when(adRepository.findById(adId)).thenReturn(Optional.of(testAd));
+        when(imageFile.getBytes()).thenReturn(new byte[]{1, 2, 3});
+        when(imageService.saveAdImage(imageFile)).thenReturn("imagePath");
 
-        Ad existingAd = new Ad();
-        existingAd.setId(adId);
-        existingAd.setTitle("Old Title");
-        existingAd.setDescription("Old Description");
-        existingAd.setPrice(1000);
+        byte[] result = adService.uploadAdImage(adId, imageFile);
 
-        Ad savedAd = new Ad();
-        savedAd.setId(adId);
-        savedAd.setTitle(updatedAd.getTitle());
-        savedAd.setDescription(updatedAd.getDescription());
-        savedAd.setPrice(updatedAd.getPrice());
-
-        AdDto expectedAdDto = new AdDto();
-
-        when(adRepository.findById(adId)).thenReturn(Optional.of(existingAd));
-        when(adRepository.save(existingAd)).thenReturn(savedAd);
-        when(adMapper.toAdDto(savedAd)).thenReturn(expectedAdDto);
-
-        AdDto result = adService.updateAd(adId, updatedAd);
-
-        assertEquals(expectedAdDto, result);
-        assertEquals(updatedAd.getTitle(), existingAd.getTitle());
-        assertEquals(updatedAd.getDescription(), existingAd.getDescription());
-        assertEquals(updatedAd.getPrice(), existingAd.getPrice());
-        verify(adRepository, times(1)).findById(adId);
-        verify(adRepository, times(1)).save(existingAd);
+        assertArrayEquals(new byte[]{1, 2, 3}, result);
+        assertEquals("imagePath", testAd.getImagePath());
+        verify(adRepository).findById(adId);
+        verify(imageService).saveAdImage(imageFile);
+        verify(adRepository).save(testAd);
     }
 
-    @DisplayName("Обновление объявления - должен выбросить исключение при отсутствии объявления")
+    @DisplayName("Создание объявления с изображением - должен создать объявление с изображением при валидных данных")
     @Test
-    void updateAdWhenAdNotExistsThrowException() {
+    void createAdShouldCreateAdWithImageWhenValidInput() throws IOException {
 
-        int adId = 1;
-        CreateOrUpdateAdDto updatedAd = new CreateOrUpdateAdDto();
-        when(adRepository.findById(adId)).thenReturn(Optional.empty());
+        when(authentication.getName()).thenReturn("username");
+        when(userRepository.findByUsername("username")).thenReturn(Optional.of(testUser));
 
-        assertThrows(NoSuchElementException.class, () -> adService.updateAd(adId, updatedAd));
+        Ad savedAdWithoutImage = new Ad();
+        savedAdWithoutImage.setId(1);
+        when(adRepository.save(any(Ad.class))).thenReturn(savedAdWithoutImage);
+
+        AdDto adDtoWithId = new AdDto();
+        adDtoWithId.setPk(1);
+        when(adMapper.toAdDto(savedAdWithoutImage)).thenReturn(adDtoWithId);
+
+        when(imageFile.getBytes()).thenReturn(new byte[]{1, 2, 3});
+        when(imageService.saveAdImage(imageFile)).thenReturn("imagePath");
+
+        when(adRepository.findById(1)).thenReturn(Optional.of(savedAdWithoutImage));
+
+        AdDto result = adService.createAd(testCreateOrUpdateAdDto, imageFile, authentication);
+
+        assertEquals(adDtoWithId, result);
+        verify(userRepository).findByUsername("username");
+        verify(adRepository, times(2)).save(any(Ad.class));
+        verify(adMapper).toAdDto(savedAdWithoutImage);
+        verify(imageService).saveAdImage(imageFile);
+        verify(adRepository).findById(1);
     }
 
-    @DisplayName("Удаление объявления - должен удалить объявление и изображение при существующем объявлении")
+    @DisplayName("Обновление объявления - должен обновить объявление при валидных данных")
     @Test
-    void deleteAdWhenAdExistsDeleteAdAndImage() throws IOException {
+    void updateAdShouldUpdateAdWhenValidInput() {
 
-        int adId = 1;
-        Ad ad = new Ad();
-        ad.setId(adId);
-        ad.setImagePath("/ads/images/1");
+        Integer adId = 1;
+        when(adRepository.findById(adId)).thenReturn(Optional.of(testAd));
+        when(adRepository.save(testAd)).thenReturn(testAd);
+        when(adMapper.toAdDto(testAd)).thenReturn(testAdDto);
+        testCreateOrUpdateAdDto.setTitle("New Title");
+        testCreateOrUpdateAdDto.setDescription("New Description");
+        testCreateOrUpdateAdDto.setPrice(100);
 
-        when(adRepository.findById(adId)).thenReturn(Optional.of(ad));
+        AdDto result = adService.updateAd(adId, testCreateOrUpdateAdDto);
+
+        assertEquals(testAdDto, result);
+        assertEquals("New Title", testAd.getTitle());
+        assertEquals("New Description", testAd.getDescription());
+        assertEquals(100, testAd.getPrice());
+        verify(adRepository).findById(adId);
+        verify(adRepository).save(testAd);
+        verify(adMapper).toAdDto(testAd);
+    }
+
+    @DisplayName("Удаление объявления - должен удалить объявление и его изображение, когда объявление существует")
+    @Test
+    void deleteAdShouldDeleteAdAndImageWhenAdExists() throws IOException {
+
+        Integer adId = 1;
+        testAd.setImagePath("imagePath");
+        when(adRepository.findById(adId)).thenReturn(Optional.of(testAd));
 
         adService.deleteAd(adId);
 
-        verify(imageService, times(1)).deleteImage("/ads/images/1");
-        verify(adRepository, times(1)).delete(ad);
+        verify(adRepository).findById(adId);
+        verify(imageService).deleteImage("imagePath");
+        verify(adRepository).delete(testAd);
     }
 
-    @DisplayName("Обновление изображения объявления - должен обновить изображение и вернуть его байты")
+    @DisplayName("Обновление изображения объявления - должен обновить изображение и вернуть байты при валидных данных")
     @Test
-    void updateAdImageWhenAdExistsUpdateImageAndReturnBytes() throws IOException {
+    void updateAdImageShouldUpdateImageAndReturnBytesWhenValidInput() throws IOException {
+        Long adId = 1L;
+        testAd.setImagePath("oldImagePath");
+        when(adRepository.findById(adId.intValue())).thenReturn(Optional.of(testAd));
+        when(imageFile.getBytes()).thenReturn(new byte[]{1, 2, 3});
+        when(imageService.saveAdImage(imageFile)).thenReturn("newImagePath");
 
-        int adId = 1;
-        MultipartFile newImage = new MockMultipartFile("newImage", "new.jpg",
-                "image/jpeg", "new image".getBytes());
-        String newImagePath = "/ads/images/2";
+        byte[] result = adService.updateAdImage(adId, imageFile);
 
-        Ad ad = new Ad();
-        ad.setId(adId);
-        ad.setImagePath("/ads/images/1");
-
-        when(adRepository.findById(adId)).thenReturn(Optional.of(ad));
-        when(imageService.saveAdImage(newImage)).thenReturn(newImagePath);
-
-        byte[] result = adService.updateAdImage((long) adId, newImage);
-
-        assertArrayEquals("new image".getBytes(), result);
-        assertEquals(newImagePath, ad.getImagePath());
-        verify(imageService, times(1)).deleteImage("/ads/images/1");
-        verify(imageService, times(1)).saveAdImage(newImage);
-        verify(adRepository, times(1)).save(ad);
+        assertArrayEquals(new byte[]{1, 2, 3}, result);
+        assertEquals("newImagePath", testAd.getImagePath());
+        verify(adRepository).findById(adId.intValue());
+        verify(imageService).deleteImage("oldImagePath");
+        verify(imageService).saveAdImage(imageFile);
+        verify(adRepository).save(testAd);
     }
 
-    @DisplayName("Получение объявлений автора - должен вернуть список DTO объявлений пользователя")
+    @DisplayName("Получение объявлений автора - должен вернуть список AdDto, когда у пользователя есть объявления")
     @Test
-    void getAdsByAuthorReturnUserAds() {
+    void getAdsByAuthorShouldReturnListOfAdDtoWhenUserHasAds() {
 
-        User author = new User();
-        author.setUsername("test@example.com");
-
-        Ad ad1 = new Ad();
-        Ad ad2 = new Ad();
-        AdDto adDto1 = new AdDto();
-        AdDto adDto2 = new AdDto();
-
-        when(authentication.getName()).thenReturn("test@example.com");
-        when(userRepository.findByUsername("test@example.com")).thenReturn(Optional.of(author));
-        when(adRepository.findAllByAuthor(author)).thenReturn(List.of(ad1, ad2));
-        when(adMapper.toAdDto(ad1)).thenReturn(adDto1);
-        when(adMapper.toAdDto(ad2)).thenReturn(adDto2);
+        when(authentication.getName()).thenReturn("username");
+        when(userRepository.findByUsername("username")).thenReturn(Optional.of(testUser));
+        when(adRepository.findAllByAuthor(testUser)).thenReturn(List.of(testAd));
+        when(adMapper.toAdDto(testAd)).thenReturn(testAdDto);
 
         List<AdDto> result = adService.getAdsByAuthor(authentication);
 
-        assertEquals(2, result.size());
-        assertTrue(result.contains(adDto1));
-        assertTrue(result.contains(adDto2));
-        verify(userRepository, times(1)).findByUsername("test@example.com");
-        verify(adRepository, times(1)).findAllByAuthor(author);
+        assertEquals(1, result.size());
+        assertEquals(testAdDto, result.get(0));
+        verify(userRepository).findByUsername("username");
+        verify(adRepository).findAllByAuthor(testUser);
+        verify(adMapper).toAdDto(testAd);
     }
-
 }

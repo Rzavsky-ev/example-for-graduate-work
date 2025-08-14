@@ -34,42 +34,6 @@ public class AdService {
     private final ImageService imageService;
 
     /**
-     * Преобразует сущность Ad в DTO объявления.
-     *
-     * @param ad сущность объявления
-     * @return DTO объявления
-     */
-    public AdDto mapToAdDto(Ad ad) {
-        return adMapper.toAdDto(ad);
-    }
-
-    /**
-     * Преобразует сущность Ad в расширенное DTO объявления.
-     *
-     * @param ad сущность объявления
-     * @return расширенное DTO объявления
-     */
-    public ExtendedAdDto mapToExtendedAdDto(Ad ad) {
-        return adMapper.toExtendedAdDto(ad);
-    }
-
-    /**
-     * Преобразует DTO создания/обновления в сущность Ad.
-     *
-     * @param dto    DTO создания/обновления объявления
-     * @param author автор объявления
-     * @return сущность объявления
-     */
-    public Ad mapToAd(CreateOrUpdateAdDto dto, User author) {
-        Ad ad = new Ad();
-        ad.setTitle(dto.getTitle());
-        ad.setDescription(dto.getDescription());
-        ad.setPrice(dto.getPrice());
-        ad.setAuthor(author);
-        return ad;
-    }
-
-    /**
      * Получает список всех объявлений.
      *
      * @return список DTO объявлений
@@ -94,7 +58,53 @@ public class AdService {
     }
 
     /**
-     * Создает новое объявление.
+     * Создает новое объявление без изображения.
+     *
+     * @param properties     DTO с данными для создания объявления
+     * @param authentication данные аутентификации
+     * @return DTO созданного объявления
+     * @throws NoSuchElementException если пользователь не найден
+     */
+    @Transactional
+    public AdDto createAdWithoutImage(CreateOrUpdateAdDto properties, Authentication authentication) {
+        User author = getUserFromAuthentication(authentication);
+        Ad ad = new Ad();
+        ad.setTitle(properties.getTitle());
+        ad.setDescription(properties.getDescription());
+        ad.setPrice(properties.getPrice());
+        ad.setAuthor(author);
+
+        Ad savedAd = adRepository.save(ad);
+        return adMapper.toAdDto(savedAd);
+    }
+
+    /**
+     * Загружает изображение для объявления.
+     *
+     * @param adId  ID объявления
+     * @param image изображение для загрузки
+     * @return байты загруженного изображения
+     * @throws IOException            при ошибках работы с изображением
+     * @throws NoSuchElementException если объявление не найдено
+     */
+    @Transactional
+    public byte[] uploadAdImage(Integer adId, MultipartFile image) throws IOException {
+        Ad ad = adRepository.findById(adId)
+                .orElseThrow(() -> new NoSuchElementException("Ad not found"));
+
+        if (ad.getImagePath() != null) {
+            imageService.deleteImage(ad.getImagePath());
+        }
+
+        String imagePath = imageService.saveAdImage(image);
+        ad.setImagePath(imagePath);
+        adRepository.save(ad);
+
+        return image.getBytes();
+    }
+
+    /**
+     * Создает новое объявление с изображением (объединяет два метода).
      *
      * @param properties     DTO с данными для создания объявления
      * @param image          изображение объявления
@@ -105,18 +115,9 @@ public class AdService {
      */
     @Transactional
     public AdDto createAd(CreateOrUpdateAdDto properties, MultipartFile image, Authentication authentication) throws IOException {
-        User author = getUserFromAuthentication(authentication);
-        Ad ad = new Ad();
-        ad.setTitle(properties.getTitle());
-        ad.setDescription(properties.getDescription());
-        ad.setPrice(properties.getPrice());
-        ad.setAuthor(author);
-
-        String imagePath = imageService.saveAdImage(image);
-        ad.setImagePath(imagePath);
-
-        Ad savedAd = adRepository.save(ad);
-        return adMapper.toAdDto(savedAd);
+        AdDto adDto = createAdWithoutImage(properties, authentication);
+        uploadAdImage(adDto.getPk(), image);
+        return adDto;
     }
 
     /**
