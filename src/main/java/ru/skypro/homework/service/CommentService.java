@@ -34,43 +34,6 @@ public class CommentService {
     private final CommentMapper commentMapper;
 
     /**
-     * Преобразует сущность Comment в CommentDto.
-     *
-     * @param comment сущность комментария
-     * @return DTO комментария
-     */
-    public CommentDto mapToCommentDto(Comment comment) {
-        return commentMapper.commentToCommentDto(comment);
-    }
-
-    /**
-     * Создает сущность Comment из DTO.
-     *
-     * @param dto    DTO для создания комментария
-     * @param author автор комментария
-     * @param ad     объявление, к которому относится комментарий
-     * @return сущность комментария
-     */
-    public Comment mapToComment(CreateOrUpdateCommentDto dto, User author, Ad ad) {
-        Comment comment = commentMapper.createCommentDtoToComment(dto);
-        comment.setAuthor(author);
-        comment.setAd(ad);
-        return comment;
-    }
-
-    /**
-     * Обновляет текст комментария из DTO.
-     *
-     * @param dto     DTO с обновленными данными
-     * @param comment сущность комментария для обновления
-     */
-    public void updateCommentFromDto(CreateOrUpdateCommentDto dto, Comment comment) {
-        if (dto.getText() != null && !dto.getText().isBlank()) {
-            comment.setText(dto.getText());
-        }
-    }
-
-    /**
      * Получает все комментарии для указанного объявления.
      *
      * @param adId ID объявления

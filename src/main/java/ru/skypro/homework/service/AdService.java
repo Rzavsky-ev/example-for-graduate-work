@@ -104,23 +104,6 @@ public class AdService {
     }
 
     /**
-     * Создает новое объявление с изображением (объединяет два метода).
-     *
-     * @param properties     DTO с данными для создания объявления
-     * @param image          изображение объявления
-     * @param authentication данные аутентификации
-     * @return DTO созданного объявления
-     * @throws IOException            при ошибках работы с изображением
-     * @throws NoSuchElementException если пользователь не найден
-     */
-    @Transactional
-    public AdDto createAd(CreateOrUpdateAdDto properties, MultipartFile image, Authentication authentication) throws IOException {
-        AdDto adDto = createAdWithoutImage(properties, authentication);
-        uploadAdImage(adDto.getPk(), image);
-        return adDto;
-    }
-
-    /**
      * Обновляет существующее объявление.
      *
      * @param id        ID объявления

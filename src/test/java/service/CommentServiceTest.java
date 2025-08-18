@@ -216,47 +216,4 @@ class CommentServiceTest {
         verify(commentRepository).findById(1);
         verifyNoMoreInteractions(commentRepository);
     }
-
-    @DisplayName("Преобразование Comment в CommentDto")
-    @Test
-    void mapToCommentDtoShouldReturnCommentDto() {
-
-        when(commentMapper.commentToCommentDto(testComment)).thenReturn(testCommentDto);
-
-        CommentDto result = commentService.mapToCommentDto(testComment);
-
-        assertEquals(testCommentDto, result);
-        verify(commentMapper).commentToCommentDto(testComment);
-    }
-
-    @DisplayName("Преобразование CreateOrUpdateCommentDto в Comment")
-    @Test
-    void mapToCommentShouldReturnComment() {
-
-        when(commentMapper.createCommentDtoToComment(testCreateCommentDto)).thenReturn(testComment);
-
-        Comment result = commentService.mapToComment(testCreateCommentDto, testUser, testAd);
-
-        assertNotNull(result);
-        assertEquals(testComment, result);
-        assertEquals(testUser, result.getAuthor());
-        assertEquals(testAd, result.getAd());
-
-        verify(commentMapper).createCommentDtoToComment(testCreateCommentDto);
-    }
-
-    @DisplayName("Обновление текста комментария из DTO")
-    @Test
-    void updateCommentFromDtoShouldUpdateCommentText() {
-
-        CreateOrUpdateCommentDto updateDto = new CreateOrUpdateCommentDto();
-        updateDto.setText("Updated text");
-
-        Comment comment = new Comment();
-        comment.setText("Original text");
-
-        commentService.updateCommentFromDto(updateDto, comment);
-
-        assertEquals("Updated text", comment.getText());
-    }
 }

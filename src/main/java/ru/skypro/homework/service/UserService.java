@@ -9,7 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import ru.skypro.homework.converter.UserMapper;
 import ru.skypro.homework.dto.NewPasswordDto;
-import ru.skypro.homework.dto.RegisterUserDto;
 import ru.skypro.homework.dto.UpdateUserDto;
 import ru.skypro.homework.dto.UserDto;
 import ru.skypro.homework.model.User;
@@ -33,36 +32,6 @@ public class UserService {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final ImageService imageService;
-
-    /**
-     * Преобразует сущность User в UserDto.
-     *
-     * @param user сущность пользователя
-     * @return DTO пользователя
-     */
-    public UserDto mapToUserDto(User user) {
-        return userMapper.userToUserDto(user);
-    }
-
-    /**
-     * Преобразует RegisterUserDto в сущность User.
-     *
-     * @param dto DTO регистрации пользователя
-     * @return сущность пользователя
-     */
-    public User mapToUser(RegisterUserDto dto) {
-        return userMapper.registerDtoToUser(dto);
-    }
-
-    /**
-     * Обновляет данные пользователя из DTO.
-     *
-     * @param dto  DTO с обновленными данными
-     * @param user сущность пользователя для обновления
-     */
-    public void updateUserFromDto(UpdateUserDto dto, User user) {
-        userMapper.updateUserFromDto(dto, user);
-    }
 
     /**
      * Получает информацию о текущем аутентифицированном пользователе.

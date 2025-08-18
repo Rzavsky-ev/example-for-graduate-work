@@ -235,43 +235,4 @@ class UserServiceTest {
         verify(imageService, never()).getImage(any());
     }
 
-    @DisplayName("Преобразование User в UserDto - успешное преобразование")
-    @Test
-    void mapToUserDtoShouldReturnUserDto() {
-
-        UserDto expectedDto = new UserDto();
-        when(userMapper.userToUserDto(testUser)).thenReturn(expectedDto);
-
-        UserDto result = userService.mapToUserDto(testUser);
-
-        assertEquals(expectedDto, result);
-        verify(userMapper).userToUserDto(testUser);
-    }
-
-    @DisplayName("Преобразование User в UserDto - успешное преобразование")
-    @Test
-    void mapToUserShouldReturnUser() {
-
-        RegisterUserDto registerUserDto = new RegisterUserDto();
-        when(userMapper.registerDtoToUser(registerUserDto)).thenReturn(testUser);
-
-        User result = userService.mapToUser(registerUserDto);
-
-        assertEquals(testUser, result);
-        verify(userMapper).registerDtoToUser(registerUserDto);
-    }
-
-    @DisplayName("Обновление пользователя из DTO - успешное обновление данных")
-    @Test
-    void updateUserFromDtoShouldUpdateUser() {
-
-        UpdateUserDto updateUserDto = new UpdateUserDto();
-        updateUserDto.setFirstName("NewName");
-        updateUserDto.setLastName("NewLastName");
-        updateUserDto.setPhone("+7 (999) 999-99-99");
-
-        userService.updateUserFromDto(updateUserDto, testUser);
-
-        verify(userMapper).updateUserFromDto(updateUserDto, testUser);
-    }
 }

@@ -129,36 +129,6 @@ public class AdServiceTest {
         verify(adRepository).save(testAd);
     }
 
-    @DisplayName("Создание объявления с изображением - должен создать объявление с изображением при валидных данных")
-    @Test
-    void createAdShouldCreateAdWithImageWhenValidInput() throws IOException {
-
-        when(authentication.getName()).thenReturn("username");
-        when(userRepository.findByUsername("username")).thenReturn(Optional.of(testUser));
-
-        Ad savedAdWithoutImage = new Ad();
-        savedAdWithoutImage.setId(1);
-        when(adRepository.save(any(Ad.class))).thenReturn(savedAdWithoutImage);
-
-        AdDto adDtoWithId = new AdDto();
-        adDtoWithId.setPk(1);
-        when(adMapper.toAdDto(savedAdWithoutImage)).thenReturn(adDtoWithId);
-
-        when(imageFile.getBytes()).thenReturn(new byte[]{1, 2, 3});
-        when(imageService.saveAdImage(imageFile)).thenReturn("imagePath");
-
-        when(adRepository.findById(1)).thenReturn(Optional.of(savedAdWithoutImage));
-
-        AdDto result = adService.createAd(testCreateOrUpdateAdDto, imageFile, authentication);
-
-        assertEquals(adDtoWithId, result);
-        verify(userRepository).findByUsername("username");
-        verify(adRepository, times(2)).save(any(Ad.class));
-        verify(adMapper).toAdDto(savedAdWithoutImage);
-        verify(imageService).saveAdImage(imageFile);
-        verify(adRepository).findById(1);
-    }
-
     @DisplayName("Обновление объявления - должен обновить объявление при валидных данных")
     @Test
     void updateAdShouldUpdateAdWhenValidInput() {
